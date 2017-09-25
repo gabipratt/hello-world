@@ -12,12 +12,16 @@ void display(){
   point (x,y);
 }
 void step () {
-  int choice = int (random(2));
-
-if (choice ==0){
-  x++;
-}else {
-  y++;
+ float r = random (1);
+ if (r<0.4) {
+   x++;
+ }else if (r <0.6){
+   x--;
+ }else if (r <0.8){
+   y++;
+ }
+ else {
+   y--;
 }
 }
 }
