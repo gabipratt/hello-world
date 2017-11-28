@@ -1,0 +1,42 @@
+#define CHB_DIR 13 
+#define CHB_PWM 11
+#define CHB_BRK 8
+#define CHB_SNS A1
+
+#define CHA_DIR 12
+#define CHA_PWM 3
+#define CHA_BRK 9
+#define CHA_SNS A0
+
+#define LGT_SNS_RGT A2
+#define LGT_SNS_LFT A3
+int motorB_speed = 0;
+
+void setup() {
+  // put your setup code here, to run once:
+  Serial.begin(115200);
+  pinMode(CHA_DIR, OUTPUT);
+  pinMode(CHA_BRK, OUTPUT);
+  digitalWrite(CHA_DIR, LOW);
+  digitalWrite(CHA_BRK, LOW);
+  pinMode(CHB_DIR, OUTPUT);
+  pinMode(CHB_BRK, OUTPUT);
+  digitalWrite(CHB_DIR, LOW);
+  digitalWrite(CHB_BRK, LOW);
+}
+
+void loop() {
+  int lightRight = analogRead(LGT_SNS_RGT)/4; 
+  int lightLeft = analogRead(LGT_SNS_LFT)/4;
+  
+  Serial.print("left sensor: ");
+  Serial.println(lightLeft);
+  Serial.print("right sensor: ");
+  Serial.println(lightRight);
+  
+  // put your main code here, to run repeatedly:
+  analogWrite(CHB_PWM, lightLeft); //conect sensor value to direction
+  analogWrite(CHA_PWM, lightRight);
+ 
+ 
+}
