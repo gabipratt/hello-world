@@ -6,8 +6,8 @@ SoftwareSerial mySoftwareSerial(10, 11); // RX, TX
 DFRobotDFPlayerMini myDFPlayer;
 void printDetail(uint8_t type, int value); 
 
-int flexPin1 = 8;
-int flexPin2 = 7;
+int flexPin1 = 0;
+int flexPin2 = 1;
 void setup() {
   // put your setup code here, to run once:
  mySoftwareSerial.begin(9600);
