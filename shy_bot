@@ -28,6 +28,7 @@
 
 #define VIBRATION_PIN 5
 int motorB_speed = 0;
+int count = 0;               // Count the light flashes 
 
 RunningAverage avgL( (1000/LDR_READ_EVERY_MS)*10 );
 RunningAverage avgR( (1000/LDR_READ_EVERY_MS)*10 );
@@ -79,9 +80,9 @@ void setup() {
   Serial.begin(115200);
 
   init_motor();
-  init_audio();
+  //init_audio();
 
-//  pinMode(VIBRATION_PIN, OUTPUT);
+ pinMode(VIBRATION_PIN, OUTPUT);
 }
 
 void debug_text() {
@@ -124,26 +125,21 @@ void loop() {
 //    
 
   read_eyes();
-//  steer_with_light();
+ steer_with_light();
 
-//  
-//  if (rightEye > 400 || leftEye > 400) { // when the room is really dark it should be around 400. Maximun is 1000.
-//    shake(true);
-//   // speak(false);
-//  }
-////  if ((rightEye>100) && (leftEye>100)) {
-////   shake (false);
-////   speak (true);
-//// }
-//// if ((rightEye<100) && (leftEye<100)){
-//// shake (false);
-////speak (false);
-//// }
-// 
-//  else if (rightEye < 400 || leftEye < 400) { // if there is no light stops vibrating
-//    shake(false);
-//    //speak (true);
-//  }
+  
+ if (rightEye > 400 || leftEye > 400) { // when the room is really dark it should be around 400. Maximun is 1000.
+   shake(true);
+ }
+//condition for if you flash the light three times on the bot it spins  
+//read value from LDR, store value, read next value & compare with previous, if difference >= x then count++ 
+// if (count >= 4) {
+   //     spin (true); //turning bot 
+   //     count = 0; //resets the counter
+
+else if (rightEye < 400 || leftEye < 400) { // if there is no light stops vibrating
+shake(false);
+  }
   delay(50);
 }
 
@@ -158,19 +154,24 @@ double readEye(int eye) {
   return (reading / 4.0); 
 }
 
-void speak(bool _soundOn) {
- myDFPlayer.volume(30); //set volume to 30
-  myDFPlayer.play(1); //play mp3
-}
+//void speak(bool _soundOn) {
+ //myDFPlayer.volume(30); //set volume to 30
+ // myDFPlayer.play(1); //play mp3
+//}
 
-//void shake(bool _shakeOn) {
-//  digitalWrite (VIBRATION_PIN, _shakeOn); // if the light is turned on, it activates the vibrating module
+void shake(bool _shakeOn) {
+digitalWrite (VIBRATION_PIN, _shakeOn); // if the light is turned on, it activates the vibrating module
 ////  delay (1000); 
 ////  digitalWrite (5, LOW); 
 ////  delay (1000);
-//}
-//
-//void turn(int howmuch) {} // turn around
+}
+
+//void spin(int howmuch) {// spin around , how can we define full turn?
+//analogWrite(CHB_PWM, mappedMotorValue(leftEye, true));
+//delay(3000);
+//} 
+
+//void turn(int howmuch) {} 
 //void forward(int steps) {} // move for certain aounts of steps
 //
 //
