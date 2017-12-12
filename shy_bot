@@ -1,0 +1,189 @@
+#include <DFRobotDFPlayerMini.h>
+//#include "Arduino.h"
+#include "SoftwareSerial.h"
+#include "runningaverage.h"
+
+#define CHB_DIR 13 
+#define CHB_PWM 11 
+#define CHB_BRK 8
+#define CHB_SNS A1
+
+#define CHA_DIR 12
+#define CHA_PWM 3
+#define CHA_BRK 9
+#define CHA_SNS A0
+
+#define LDR_Right A3
+#define LDR_Left  A2
+//int LDR_Left = 2;
+//int LDR_Right = 3;
+
+// mapping ranges light sensors (thresholds)
+#define LGT_THR_LFT_MIN 180 // lowerbund of the LEFT eye
+#define LGT_THR_LFT_MAX 988
+#define LGT_THR_RGT_MIN 240 // right
+#define LGT_THR_RGT_MAX 990
+
+#define LDR_READ_EVERY_MS 200 //5 times per second
+
+#define VIBRATION_PIN 5
+int motorB_speed = 0;
+
+RunningAverage avgL( (1000/LDR_READ_EVERY_MS)*10 );
+RunningAverage avgR( (1000/LDR_READ_EVERY_MS)*10 );
+
+int leftEye, rightEye;
+
+SoftwareSerial mySoftwareSerial(6, 10); // RX, TX // for the mp3  module 
+//SoftwareSerial mySoftwareSerial(0, 1); // RX, TX // for the mp3  module
+DFRobotDFPlayerMini myDFPlayer; 
+void printDetail(uint8_t type, int value); 
+
+void init_motor() {
+  // initialize the PWM pins
+  pinMode(CHB_PWM, OUTPUT);
+  digitalWrite(CHB_PWM, LOW);
+  // initialize the PWM pins
+  pinMode(CHA_PWM, OUTPUT);
+  digitalWrite(CHA_PWM, LOW);
+
+  pinMode(CHA_DIR, OUTPUT);
+  pinMode(CHA_BRK, OUTPUT);
+  digitalWrite(CHA_DIR, LOW);
+  digitalWrite(CHA_BRK, LOW);
+  pinMode(CHB_DIR, OUTPUT);
+  pinMode(CHB_BRK, OUTPUT);
+  digitalWrite(CHB_DIR, LOW);
+  digitalWrite(CHB_BRK, LOW);
+
+  Serial.println( "initializing motor" );
+}
+
+void init_audio() {  
+ Serial.println();
+ Serial.println(F("DFRobot DFPlayer Mini Demo"));
+ Serial.println(F("Initializing DFPlayer ... (May take 3~5 seconds)"));
+ 
+ if (!myDFPlayer.begin(mySoftwareSerial)) {  //Use softwareSerial to communicate with mp3.
+   Serial.println(F("Unable to begin:"));
+   Serial.println(F("1.Please recheck the connection!"));
+   Serial.println(F("2.Please insert the SD card!"));
+   while(true);
+ }
+ Serial.println(F("DFPlayer Mini online."));
+}
+
+void setup() {
+  // put your setup code here, to run once:
+  mySoftwareSerial.begin(9600);
+  Serial.begin(115200);
+
+  init_motor();
+  init_audio();
+
+//  pinMode(VIBRATION_PIN, OUTPUT);
+}
+
+void debug_text() {
+  Serial.print("left sensor: ");
+  Serial.println(leftEye);
+  Serial.print("right sensor: ");
+  Serial.println(rightEye);
+}
+
+void debug_graph() {
+  Serial.print(leftEye);
+  Serial.print(",");
+  Serial.print(rightEye);
+  Serial.print(",");
+  Serial.print( avgL.getAverage() );
+  Serial.print(",");
+  Serial.println( avgR.getAverage() );
+}
+
+void read_eyes() {
+  //int lightRight = analogRead(LDR_Right)/4; 
+  //int lightLeft = analogRead(LDR_Left)/4;
+
+  // first we read the value of the left eye, and we add that value to the average calculator
+  rightEye = readEye(LDR_Right); 
+  avgR.addValue( rightEye );
+  
+  leftEye = readEye(LDR_Left);
+  avgL.addValue( leftEye );
+}
+
+void steer_with_light() {
+  // put your main code here, to run repeatedly:
+  analogWrite(CHB_PWM, mappedMotorValue(leftEye, true)); //conect sensor value to direction
+  analogWrite(CHA_PWM, mappedMotorValue(rightEye, false));
+}
+
+void loop() {
+//  debug_graph();
+//    
+
+  read_eyes();
+//  steer_with_light();
+
+//  
+//  if (rightEye > 400 || leftEye > 400) { // when the room is really dark it should be around 400. Maximun is 1000.
+//    shake(true);
+//   // speak(false);
+//  }
+////  if ((rightEye>100) && (leftEye>100)) {
+////   shake (false);
+////   speak (true);
+//// }
+//// if ((rightEye<100) && (leftEye<100)){
+//// shake (false);
+////speak (false);
+//// }
+// 
+//  else if (rightEye < 400 || leftEye < 400) { // if there is no light stops vibrating
+//    shake(false);
+//    //speak (true);
+//  }
+  delay(50);
+}
+
+double readEye(int eye) { 
+  double reading = .0;
+  // read 4 times to get a stable reading
+  for(int i = 0; i < 4; i++) {
+    reading += analogRead(eye);
+    delay(5);
+  }
+
+  return (reading / 4.0); 
+}
+
+void speak(bool _soundOn) {
+ myDFPlayer.volume(30); //set volume to 30
+  myDFPlayer.play(1); //play mp3
+}
+
+//void shake(bool _shakeOn) {
+//  digitalWrite (VIBRATION_PIN, _shakeOn); // if the light is turned on, it activates the vibrating module
+////  delay (1000); 
+////  digitalWrite (5, LOW); 
+////  delay (1000);
+//}
+//
+//void turn(int howmuch) {} // turn around
+//void forward(int steps) {} // move for certain aounts of steps
+//
+//
+int mappedMotorValue(int reading, bool isLeft){
+  int mappedValue;
+  if(isLeft){
+    mappedValue = map(reading, LGT_THR_LFT_MIN, LGT_THR_LFT_MAX, 0, 1023);
+  }else{
+    mappedValue = map(reading, LGT_THR_RGT_MIN, LGT_THR_RGT_MAX, 0, 1023);
+  }
+  mappedValue = mappedValue/4;
+  if(mappedValue < 0) return 0;
+  // --------------------------
+  if(mappedValue > 255) return 255;
+  return mappedValue;
+}
